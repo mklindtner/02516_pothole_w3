@@ -71,10 +71,19 @@ class PotholeDataset(torch.utils.data.Dataset):
 
         self.image_files = []
         self.boxes = []
-        for xmlfile in splits_data[split]:
-            image_name, boxes = load_xml_file(base_path / subdir/ xmlfile)
 
-            self.image_files.append(base_path / subdir / image_name)
+        if split == 'all':
+            for cur in 'train', 'validation', 'test':
+                self.load_samples(base_path / subdir, splits_data[cur])
+
+        else:
+            self.load_samples(base_path / subdir, splits_data[split])
+
+    def load_samples(self, path, files):
+        for xmlfile in files:
+            image_name, boxes = load_xml_file(path / xmlfile)
+
+            self.image_files.append(path / image_name)
             self.boxes.append(boxes)
 
     def __len__(self):
