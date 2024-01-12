@@ -80,7 +80,7 @@ class PotholeDataset(torch.utils.data.Dataset):
     def __len__(self):
         """Return the total number of samples."""
 
-        return len(self.label_files)
+        return len(self.image_files)
 
     def __getitem__(self, idx):
         """Generate one sample of data."""
