@@ -402,4 +402,5 @@ FodyWeavers.xsd
 .ipynb_checkpoints/
 
 #Our stuff
+/data/
 nb/mkl.ipynb
