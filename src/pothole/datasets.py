@@ -20,6 +20,11 @@ DEFAULT_IMAGE_TRANSFORM = transforms.Compose(
 
 
 def load_xml_file(path):
+    """Load Pascal Voc XML Annotation file.
+
+    Strongly inspired by https://stackoverflow.com/a/53832130.
+    """
+
     path = Path(path)
 
     tree = ET.parse(path)
