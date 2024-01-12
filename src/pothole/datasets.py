@@ -93,10 +93,8 @@ class PotholeDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         """Generate one sample of data."""
-
         image = Image.open(self.image_files[idx])
 
         X = self.image_transform(image)
-        Y = self.boxes[idx]
-
+        Y = torch.tensor(self.boxes[idx])       
         return X, Y
