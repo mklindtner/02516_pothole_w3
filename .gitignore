@@ -396,3 +396,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Python
+*.egg-info/
+.ipynb_checkpoints/
+
+#Our stuff
+nb/mkl.ipynb
