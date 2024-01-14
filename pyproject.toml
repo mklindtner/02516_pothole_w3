@@ -6,6 +6,7 @@ requires-python = ">= 3.9"
 dependencies = [
   "ipympl",
   "matplotlib",
+  "opencv-contrib-python",
   "torch",
 ]
 
