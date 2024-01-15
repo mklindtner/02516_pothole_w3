@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import random
 import xml.etree.ElementTree as ET
 
 
@@ -7,6 +8,7 @@ import numpy as np
 from PIL import Image
 import torch
 import torchvision.transforms.v2 as transforms
+import yaml
 
 
 from pothole.boxes import xyxy_to_xywh
@@ -21,11 +23,8 @@ DEFAULT_BASE_PATH = Path(__file__).parent.parent.parent / 'data/Potholes'
 # https://pytorch.org/hub/pytorch_vision_resnet/
 DEFAULT_IMAGE_TRANSFORM = transforms.Compose(
     [
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
         transforms.ToImage(),
         transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
 )
 
@@ -100,6 +99,7 @@ class PotholeDataset(torch.utils.data.Dataset):
     def __init__(
         self,
         split,
+        proposals_path,
         image_transform=DEFAULT_IMAGE_TRANSFORM,
         base_path=DEFAULT_BASE_PATH,
         subdir='annotated-images',
@@ -108,22 +108,27 @@ class PotholeDataset(torch.utils.data.Dataset):
 
         self.raw_data = PotholeRawData(base_path=base_path, subdir=subdir)
 
+        with Path(proposals_path).open('rt') as file:
+            self.loaded_proposals = yaml.safe_load(file)
+
         self.image_files = []
-        self.boxes = []
+        self.ground_truths = []
+        self.proposals = []
 
         if split == 'all':
             for cur in 'train', 'validation', 'test':
-                self.load_samples(base_path / subdir, self.raw_data.get_subset(cur))
+                self.load_samples(cur)
 
         else:
-            self.load_samples(base_path / subdir, self.raw_data.get_subset(split))
+            self.load_samples(split)
 
-    def load_samples(self, path, files):
-        for xmlfile in files:
-            image_name, boxes = load_xml_file(path / xmlfile)
+    def load_samples(self, split):
+        for xmlfile in self.raw_data.iter_subset(split):
+            image_name, ground_truth = load_xml_file(self.raw_data.get_full_path(xmlfile))
 
-            self.image_files.append(path / image_name)
-            self.boxes.append(boxes)
+            self.image_files.append(self.raw_data.get_full_path(image_name))
+            self.ground_truths.append(ground_truth)
+            self.proposals.append(self.loaded_proposals[xmlfile])
 
     def __len__(self):
         """Return the total number of samples."""
@@ -132,8 +137,33 @@ class PotholeDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         """Generate one sample of data."""
-        image = Image.open(self.image_files[idx])
 
-        X = self.image_transform(image)
-        Y = torch.tensor(self.boxes[idx])
-        return X, Y
+        n_gt = len(self.ground_truths[idx])
+
+        image = self.image_transform(Image.open(self.image_files[idx]))
+
+        pos_samples = min(16 - n_gt, len(self.proposals[idx]['pothole']))
+        pos = random.sample(self.proposals[idx]['pothole'], pos_samples)
+
+        n_pos = len(pos)
+
+        bgs = random.sample(self.proposals[idx]['background'], 64 - n_pos - n_gt)
+
+        regions = []
+        regions.extend((bb, 1) for bb in self.ground_truths[idx])
+        regions.extend((bb, 1) for bb in pos)
+        regions.extend((bb, 0) for bb in bgs)
+
+        X = torch.zeros(64, 3, 224, 224)
+        labels = []
+
+        for i, (bb, label) in enumerate(regions):
+            labels.append(label)
+            x = transforms.functional.crop(image, *bb)
+            x = transforms.functional.resize(x, (224, 224))
+            x = transforms.functional.normalize(x, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            X[i] = x
+
+        y = torch.tensor(labels)
+
+        return X, y
