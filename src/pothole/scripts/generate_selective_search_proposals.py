@@ -41,8 +41,6 @@ def generate_proposals(raw_data, k1, k2):
             'background': list(map(lambda b: b.tolist(), bg)),
         }
 
-        break
-
     return results
 
 
