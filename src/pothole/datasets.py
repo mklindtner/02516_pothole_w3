@@ -3,9 +3,13 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
+import numpy as np
 from PIL import Image
 import torch
 import torchvision.transforms.v2 as transforms
+
+
+from pothole.boxes import xyxy_to_xywh
 
 
 DEFAULT_BASE_PATH = Path(__file__).parent.parent.parent / 'data/Potholes'
@@ -57,8 +61,11 @@ def load_xml_file(path):
 
 
 class PotholeRawData:
-    def __init__(self, base_path=DEFAULT_BASE_PATH):
-        with (base_path / 'splits.json').open('rt') as file:
+    def __init__(self, base_path=DEFAULT_BASE_PATH, subdir='annotated-images'):
+        self.base_path = Path(base_path)
+        self.subdir = subdir
+
+        with (self.base_path / 'splits.json').open('rt') as file:
             splits_data = json.loads(file.read())
 
         testval_split = len(splits_data['test']) // 2
@@ -68,11 +75,25 @@ class PotholeRawData:
         self.subsets['validation'] = splits_data['test'][:testval_split]
         self.subsets['test'] = splits_data['test'][testval_split:]
 
+    def get_full_path(self, filename):
+        return self.base_path / self.subdir / filename
+
     def get_subset(self, split):
         return self.subsets[split]
 
     def iter_subset(self, split):
         yield from self.subsets[split]
+
+    def iter_subset_image_boxes(self, split):
+        """Iterate over subset of images with xywh boxes."""
+
+        for xmlfile in self.iter_subset(split):
+            image_name, boxes_xyxy = load_xml_file(self.get_full_path(xmlfile))
+
+            image = Image.open(self.get_full_path(image_name))
+            boxes = list(map(xyxy_to_xywh, boxes_xyxy))
+
+            yield xmlfile, np.array(image), boxes
 
 
 class PotholeDataset(torch.utils.data.Dataset):
@@ -85,7 +106,7 @@ class PotholeDataset(torch.utils.data.Dataset):
     ):
         self.image_transform = image_transform
 
-        self.raw_data = PotholeRawData(base_path=base_path)
+        self.raw_data = PotholeRawData(base_path=base_path, subdir=subdir)
 
         self.image_files = []
         self.boxes = []

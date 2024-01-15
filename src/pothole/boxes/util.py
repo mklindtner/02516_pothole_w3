@@ -33,15 +33,15 @@ def box_iou(a, b):
 
 
 def filter_proposals(proposals, target, metric=box_iou, k1=0.3, k2=0.7):
-    pothole = []
+    pos = []
     background = []
 
     for prop in proposals:
         scores = [metric(prop, t) for t in target]
 
         if max(scores) >= k2:
-            pothole.append(prop)
+            pos.append(prop)
         elif max(scores) < k1:
             background.append(prop)
 
-    return pothole, background
+    return pos, background

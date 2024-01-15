@@ -8,6 +8,7 @@ dependencies = [
   "matplotlib",
   "opencv-contrib-python",
   "torch",
+  "pyyaml",
 ]
 
 [build-system]
