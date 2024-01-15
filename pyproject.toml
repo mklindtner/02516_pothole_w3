@@ -14,3 +14,7 @@ dependencies = [
 [build-system]
 
 requires = ["setuptools >= 61.0"]
+
+[project.scripts]
+
+pothole-generate-selective-search-proposals = "pothole.scripts.generate_selective_search_proposals:main"
