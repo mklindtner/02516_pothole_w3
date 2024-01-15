@@ -56,6 +56,25 @@ def load_xml_file(path):
     return filename, list_with_all_boxes
 
 
+class PotholeRawData:
+    def __init__(self, base_path=DEFAULT_BASE_PATH):
+        with (base_path / 'splits.json').open('rt') as file:
+            splits_data = json.loads(file.read())
+
+        testval_split = len(splits_data['test']) // 2
+
+        self.subsets = {}
+        self.subsets['train'] = splits_data['train']
+        self.subsets['validation'] = splits_data['test'][:testval_split]
+        self.subsets['test'] = splits_data['test'][testval_split:]
+
+    def get_subset(self, split):
+        return self.subsets[split]
+
+    def iter_subset(self, split):
+        yield from self.subsets[split]
+
+
 class PotholeDataset(torch.utils.data.Dataset):
     def __init__(
         self,
@@ -66,25 +85,17 @@ class PotholeDataset(torch.utils.data.Dataset):
     ):
         self.image_transform = image_transform
 
-        with (base_path / 'splits.json').open('rt') as file:
-            splits_data = json.loads(file.read())
-
-        testval_split = len(splits_data['test']) // 2
-
-        splits_data['validation'], splits_data['test'] = (
-            splits_data['test'][:testval_split],
-            splits_data['test'][testval_split:],
-        )
+        self.raw_data = PotholeRawData(base_path=base_path)
 
         self.image_files = []
         self.boxes = []
 
         if split == 'all':
             for cur in 'train', 'validation', 'test':
-                self.load_samples(base_path / subdir, splits_data[cur])
+                self.load_samples(base_path / subdir, self.raw_data.get_subset(cur))
 
         else:
-            self.load_samples(base_path / subdir, splits_data[split])
+            self.load_samples(base_path / subdir, self.raw_data.get_subset(split))
 
     def load_samples(self, path, files):
         for xmlfile in files:
