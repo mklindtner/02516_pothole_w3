@@ -11,8 +11,12 @@ import torchvision.transforms.v2 as transforms
 DEFAULT_BASE_PATH = Path(__file__).parent.parent.parent / 'data/Potholes'
 
 
+# Resize, center crop and normalization according to
+# https://pytorch.org/vision/main/models/generated/torchvision.models.resnet50.html#torchvision.models.ResNet50_Weights
+# and
+# https://pytorch.org/hub/pytorch_vision_resnet/
 DEFAULT_IMAGE_TRANSFORM = transforms.Compose(
-    [        
+    [
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToImage(),
@@ -99,5 +103,5 @@ class PotholeDataset(torch.utils.data.Dataset):
         image = Image.open(self.image_files[idx])
 
         X = self.image_transform(image)
-        Y = torch.tensor(self.boxes[idx])       
+        Y = torch.tensor(self.boxes[idx])
         return X, Y
