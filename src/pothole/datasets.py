@@ -142,15 +142,25 @@ class PotholeDataset(torch.utils.data.Dataset):
 
         image = self.image_transform(Image.open(self.image_files[idx]))
 
-        pos_samples = min(16 - n_gt, len(self.proposals[idx]['pothole']))
-        pos = random.sample(self.proposals[idx]['pothole'], pos_samples)
+        regions = []
 
-        n_pos = len(pos)
+        if n_gt >= 16:
+            pos_samples = 16
+            pos = []
+
+            regions.extend((bb, 1) for bb in random.sample(self.ground_truths[idx], pos_samples))
+
+            n_pos = 16
+        else:
+            pos_samples = min(16 - n_gt, len(self.proposals[idx]['pothole']))
+            pos = random.sample(self.proposals[idx]['pothole'], pos_samples)
+
+            regions.extend((bb, 1) for bb in self.ground_truths[idx])
+
+            n_pos = len(pos)
 
         bgs = random.sample(self.proposals[idx]['background'], 64 - n_pos - n_gt)
 
-        regions = []
-        regions.extend((bb, 1) for bb in self.ground_truths[idx])
         regions.extend((bb, 1) for bb in pos)
         regions.extend((bb, 0) for bb in bgs)
 
@@ -174,6 +184,6 @@ class PotholeDataset(torch.utils.data.Dataset):
 
             X[i] = x
 
-        y = torch.tensor(labels)
+        y = torch.tensor(labels).unsqueeze(1).to(torch.float32)
 
         return X, y
