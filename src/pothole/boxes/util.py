@@ -7,6 +7,12 @@ def xyxy_to_xywh(bb):
     return bb[0], bb[1], bb[2]-bb[0], bb[3]-bb[1]
 
 
+def xywh_to_xyxy(bb):
+    """Convert bounding box from [x, y, w, h] to [xmin, ymin, xmax, ymax]."""
+
+    return bb[0], bb[1], bb[0]+bb[2], bb[1]+bb[3]
+
+
 def box_iou(a, b):
     """Calculate the intersection over union metric for two bounding boxes.
 
