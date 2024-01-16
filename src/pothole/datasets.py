@@ -157,9 +157,9 @@ class PotholeDataset(torch.utils.data.Dataset):
 
             regions.extend((bb, 1) for bb in self.ground_truths[idx])
 
-            n_pos = len(pos)
+            n_pos = len(pos) + n_gt
 
-        bgs = random.sample(self.proposals[idx]['background'], 64 - n_pos - n_gt)
+        bgs = random.sample(self.proposals[idx]['background'], 64 - n_pos)
 
         regions.extend((bb, 1) for bb in pos)
         regions.extend((bb, 0) for bb in bgs)

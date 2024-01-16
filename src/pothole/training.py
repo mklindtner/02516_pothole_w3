@@ -8,7 +8,7 @@ def train(model, opt, lossfunc, train_loader, device, epochs=10):
     losses = []
 
     for epoch in range(epochs):
-        LOG.info('* Training epoch %d/%d.', epoch, epochs)
+        LOG.info('* Training epoch %d/%d.', epoch+1, epochs)
 
         model.train()
 
