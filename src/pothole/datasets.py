@@ -11,7 +11,7 @@ import torchvision.transforms.v2 as transforms
 import yaml
 
 
-from pothole.boxes import xyxy_to_xywh
+from pothole.boxes import load_proposals, xyxy_to_xywh
 
 
 DEFAULT_BASE_PATH = Path(__file__).parent.parent.parent / 'data/Potholes'
@@ -108,8 +108,12 @@ class PotholeDataset(torch.utils.data.Dataset):
 
         self.raw_data = PotholeRawData(base_path=base_path, subdir=subdir)
 
-        with Path(proposals_path).open('rt') as file:
-            self.loaded_proposals = yaml.safe_load(file)
+        proposals_path = Path(proposals_path)
+        with proposals_path.open('rt') as file:
+            if proposals_path.suffix == '.csv':
+                self.loaded_proposals = load_proposals(file)
+            else:
+                self.loaded_proposals = yaml.safe_load(file)
 
         self.image_files = []
         self.ground_truths = []

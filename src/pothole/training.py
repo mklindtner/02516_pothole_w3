@@ -30,6 +30,6 @@ def train(model, opt, lossfunc, train_loader, device, epochs=10):
 
         LOG.info('Loss: %f', avg_loss)
 
-        losses.append(avg_loss)
+        losses.append(avg_loss.item())
 
     return losses
