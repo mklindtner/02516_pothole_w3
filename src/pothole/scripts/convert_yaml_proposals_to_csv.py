@@ -11,8 +11,8 @@ def convert(infile, outfile):
     with Path(infile).open('rt') as file:
         proposals = yaml.safe_load(file)
 
-    with Path(outfile).open('wt') as file:
-        save_proposalls(file, proposals)
+    with Path(outfile).open('xt') as file:
+        save_proposals(file, proposals)
 
 
 def main():
@@ -21,6 +21,10 @@ def main():
     parser.add_argument('infile', type=Path)
     parser.add_argument('outfile', type=Path)
     args = parser.parse_args()
+
+    # Fail early.
+    if args.outfile.is_file():
+        raise RuntimeError(f'File "{args.outfile}" already exists!')
 
     convert(args.infile, args.outfile)
 
