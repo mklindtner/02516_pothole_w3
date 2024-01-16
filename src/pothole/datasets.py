@@ -95,6 +95,24 @@ class PotholeRawData:
             yield xmlfile, np.array(image), boxes
 
 
+def crop_bounding_box(image, bb):
+    x = transforms.functional.crop(image, *bb)
+
+    x = transforms.functional.resize(
+        x,
+        (224, 224),
+        antialias=True,
+    )
+
+    x = transforms.functional.normalize(
+        x,
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
+
+    return x
+
+
 class PotholeDataset(torch.utils.data.Dataset):
     def __init__(
         self,
@@ -174,19 +192,7 @@ class PotholeDataset(torch.utils.data.Dataset):
         for i, (bb, label) in enumerate(regions):
             labels.append(label)
 
-            x = transforms.functional.crop(image, *bb)
-            x = transforms.functional.resize(
-                x,
-                (224, 224),
-                antialias=True,
-            )
-            x = transforms.functional.normalize(
-                x,
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            )
-
-            X[i] = x
+            X[i] = crop_bounding_box(image, bb)
 
         y = torch.tensor(labels).unsqueeze(1).to(torch.float32)
 
