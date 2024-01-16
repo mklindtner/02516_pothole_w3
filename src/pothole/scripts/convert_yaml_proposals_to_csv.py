@@ -7,6 +7,9 @@ from pathlib import Path
 import yaml
 
 
+from pothole.boxes import save_proposals
+
+
 def convert(infile, outfile):
     with Path(infile).open('rt') as file:
         proposals = yaml.safe_load(file)
