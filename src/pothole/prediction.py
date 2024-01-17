@@ -1,3 +1,4 @@
+import torch
 import torch.nn.functional as F
 
 
@@ -13,8 +14,11 @@ def classify_proposals(
 ):
     results = []
 
+    model.eval()
+
     for prop in proposals:
-        confidence = F.sigmoid(model(prepare_image(image, prop))).item()
+        with torch.no_grad():
+            confidence = F.sigmoid(model(prepare_image(image, prop))).item()
 
         if confidence > threshold:
             results.append((confidence, prop))
